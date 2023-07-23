@@ -7,6 +7,7 @@ import bCoin from "./assets/coinblue.png"
 import spike from "./assets/spike.png"
 import heartPix from "./assets/heartPix.png"
 import breaking from "./assets/breaking.png"
+import rock from "./assets/rock.png"
 import jump from "./audio/jump.mp3"
 import shoot from "./audio/shoot.mp3"
 import bre from "./audio/breaking.mp3"
@@ -14,6 +15,8 @@ import coinS from "./audio/coin.mp3"
 //https://stackoverflow.com/questions/66878947/image-is-not-getting-added-to-the-scene-phaser-3-5
 // having the pictures show in the web browser
 
+var input;
+var control = false;
 
 const gameOptions = {
     dudeGravity: 800,
@@ -43,6 +46,9 @@ export default class LevelOne extends Phaser.Scene {
       this.load.audio("shoot", shoot);
       this.load.audio("bre", bre);
       this.load.audio("coinS", coinS);
+      this.load.spritesheet("rock", rock, {
+        frameWidth: 20, frameHeight: 20
+      })
       this.load.spritesheet("player", player, 
       {frameWidth: 32, frameHeight: 48});
       this.cameras.main.setBackgroundColor("#336633");
@@ -57,9 +63,12 @@ export default class LevelOne extends Phaser.Scene {
   
     create() {
       this.count = 0;
+      input = this.input;
+
       this.jumpSound = this.sound.add("jump");
       this.breakSound = this.sound.add("bre");
       this.coinSound = this.sound.add("coinS");
+      this.shootSound = this.sound.add("shoot");
       
       this.groundGroup = this.physics.add.group({
         immovable: true,
@@ -80,22 +89,30 @@ export default class LevelOne extends Phaser.Scene {
       this.physics.add.collider(this.player, this.groundGroup);
   
       this.coinGroup = this.physics.add.group({});
-      this.physics.add.collider(this.coinGroup, this.groundGroup);
-  
+      this.shootGroup = this.physics.add.group({});
       this.bCoinGroup = this.physics.add.group({});
       this.spikes = this.physics.add.group({});
-      this.physics.add.collider(this.spikes, this.groundGroup);
-      
       this.breakGroup = this.physics.add.group({});
       this.breakGroup = this.physics.add.group({
         immovable: true,
         allowGravity: true
       })
+
+      this.physics.add.collider(this.coinGroup, this.groundGroup);
+      this.physics.add.collider(this.spikes, this.groundGroup);
+      
       this.physics.add.collider(this.breakGroup, this.coinGroupGroup);
+
+      this.physics.add.overlap(this.shootGroup, this.breakGroup, 
+        this.rockBreak, null, this);
+      this.physics.add.overlap(this.shootGroup, this.groundGroup, 
+        this.rockGround, null, this);
+      this.physics.add.overlap(this.shootGroup, this.spikes, 
+        this.rockSpike, null, this);
 
       this.physics.add.overlap(this.player, this.breakGroup, 
         this.breaksGround, null, this);
-        this.physics.add.collider(this.breakGroup, this.player);
+      this.physics.add.collider(this.breakGroup, this.player);
 
       this.physics.add.overlap(this.player, this.coinGroup, 
         this.collectCoin, null, this);
@@ -180,6 +197,26 @@ export default class LevelOne extends Phaser.Scene {
       }
     }
 
+    rockBreak(shoot, breaks) {
+      shoot.disableBody(true, true);
+
+      this.time.addEvent({
+        delay: 1000,
+        callback: () => {
+          this.fall(breaks)
+        },
+        loop: false
+      })
+    }
+
+    rockGround(shoot, ground) {
+      shoot.disableBody(true, true);
+    }
+
+    rockSpike(shoot, spikey) {
+      shoot.disableBody(true, true);
+      spikey.disableBody(true, true);
+    }
 
     //timer https://phaser.discourse.group/t/delayed-events-problem/3121
     breaksGround(player, breaks) {
@@ -241,17 +278,33 @@ export default class LevelOne extends Phaser.Scene {
         this.player.body.velocity.y = -gameOptions.dudeGravity / 1.6;
         this.jumpSound.play();
       }
+
+      // shooting https://steemit.com/utopian-io/@onepice/move-objects-according-to-the-mouse-position-with-phaser-3
+      // player position https://stackoverflow.com/questions/58811485/how-to-use-x-and-y-positions-of-a-sprite-for-fling-physics-in-phaser-3
+      if(this.input.mousePointer.isDown && control == false) {
+        let throws = this.physics.add.sprite(this.player.body.position.x + 20, this.player.body.position.y +10, "rock");
+        this.shootGroup.add(throws);
+        // adding to group https://phaser.discourse.group/t/how-to-add-custom-sprite-to-a-group/3666
+        this.physics.moveTo(throws, input.x, input.y, 500);
+        this.shootSound.play()
+        
+        control = true;
+        this.time.addEvent({delay: 900, callback: () => {control = false}, loop: false})
+
+      }
   
       if(this.player.y > this.game.config.height || this.player.y < 0 || this.heart == 0) {
         this.scene.start("LevelOne");
         this.score = 0;
         this.heart = 3;
+        control = false;
       }
   
-      if(this.score >= 0 ) {
+      if(this.score >= 7 ) {
         this.scene.start("LevelTwo");
         this.score = 0;
         this.heart = 3;
+        control = false;
       }
     }
   }

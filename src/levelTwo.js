@@ -7,12 +7,17 @@ import coin from "./assets/coin.png"
 import bCoin from "./assets/coinblue.png"
 import spike2 from "./assets/spike2.png"
 import heartPix from "./assets/heartPix.png"
+import rock from "./assets/rock.png"
 import jump from "./audio/jump.mp3"
 import shoot from "./audio/shoot.mp3"
 import bre from "./audio/breaking.mp3"
 import coinS from "./audio/coin.mp3"
 //https://stackoverflow.com/questions/66878947/image-is-not-getting-added-to-the-scene-phaser-3-5
 // having the pictures show in the web browser
+
+
+var input;
+var control = false;
 
 const gameOptions = {
     dudeGravity: 800,
@@ -41,6 +46,9 @@ export default class LevelTwo extends Phaser.Scene {
     this.load.image("blue", bCoin);
     this.load.image("spike2", spike2);
     this.load.image("heart", heartPix);
+    this.load.spritesheet("rock", rock, {
+      frameWidth: 20, frameHeight: 20
+    })
     this.load.spritesheet("player", player, 
     {frameWidth: 32, frameHeight: 48});
       //coin from https://clipground.com/pics/get
@@ -51,10 +59,12 @@ export default class LevelTwo extends Phaser.Scene {
     
   create() {
     this.count = 0;
+    input = this.input;
 
     this.jumpSound = this.sound.add("jump");
     this.coinSound = this.sound.add("coinS");
     this.breakSound = this.sound.add("bre");
+    this.shootSound = this.sound.add("shoot");
 
     this.cameras.main.setBackgroundColor("#339933");
     this.groundGroup = this.physics.add.group({
@@ -76,22 +86,22 @@ export default class LevelTwo extends Phaser.Scene {
     this.physics.add.collider(this.player, this.groundGroup);
   
     this.coinGroup = this.physics.add.group({});
-    this.physics.add.collider(this.coinGroup, this.groundGroup);
-  
     this.bCoinGroup = this.physics.add.group({});
     this.spikes = this.physics.add.group({});
-  
-    this.physics.add.overlap(this.player, this.coinGroup, 
-      this.collectCoin, null, this);
-  
-    this.physics.add.overlap(this.player, this.bCoinGroup, 
-      this.collectCoinBlue, null, this);
-    
+    this.shootGroup = this.physics.add.group({});
     this.breakGroup = this.physics.add.group({});
     this.breakGroup = this.physics.add.group({
       immovable: true,
       allowGravity: true
     })
+
+    this.physics.add.collider(this.coinGroup, this.groundGroup);
+  
+    this.physics.add.overlap(this.player, this.coinGroup, 
+      this.collectCoin, null, this);
+    this.physics.add.overlap(this.player, this.bCoinGroup, 
+      this.collectCoinBlue, null, this);
+    
     this.physics.add.collider(this.breakGroup, this.coinGroupGroup);
 
     this.physics.add.overlap(this.player, this.breakGroup, 
@@ -100,6 +110,14 @@ export default class LevelTwo extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, this.spikes, 
       this.spikesHurt, null, this);
+
+    this.physics.add.overlap(this.shootGroup, this.breakGroup, 
+      this.rockBreak, null, this);
+    this.physics.add.overlap(this.shootGroup, this.groundGroup, 
+      this.rockGround, null, this);
+    this.physics.add.overlap(this.shootGroup, this.spikes, 
+      this.rockSpike, null, this);
+
   
     this.scoreText = this.add.text(32, 2, "0", {fontSize: "30px", fill: "#ffffff"})
     this.heartText = this.add.text(32, 35, "3", {fontSize: "30px", fill: "#ffffff"})
@@ -185,6 +203,27 @@ export default class LevelTwo extends Phaser.Scene {
       loop: false
     })
   }
+
+  rockBreak(shoot, breaks) {
+    shoot.disableBody(true, true);
+
+    this.time.addEvent({
+      delay: 1000,
+      callback: () => {
+        this.fall(breaks)
+      },
+      loop: false
+    })
+  }
+
+  rockGround(shoot, ground) {
+    shoot.disableBody(true, true);
+  }
+
+  rockSpike(shoot, spikey) {
+    shoot.disableBody(true, true);
+    spikey.disableBody(true, true);
+  }
   
   fall(breaks) {
     
@@ -235,11 +274,23 @@ export default class LevelTwo extends Phaser.Scene {
       this.player.body.velocity.y = -gameOptions.dudeGravity / 1.6;
       this.jumpSound.play();
     }
+
+    // shooting https://steemit.com/utopian-io/@onepice/move-objects-according-to-the-mouse-position-with-phaser-3
+    // player position https://stackoverflow.com/questions/58811485/how-to-use-x-and-y-positions-of-a-sprite-for-fling-physics-in-phaser-3
+    if(this.input.mousePointer.isDown && control == false) {
+      let throws = this.physics.add.sprite(this.player.body.position.x + 20, this.player.body.position.y +10, "rock");
+      this.shootGroup.add(throws);
+      this.physics.moveTo(throws, input.x, input.y, 500);
+      this.shootSound.play()
+      control = true;
+      this.time.addEvent({delay: 700, callback: () => {control = false}, loop: false})
+    }
   
     if(this.player.y > this.game.config.height || this.player.y < 0 || this.heart == 0) {
       this.scene.start("LevelOne");
       this.score = 0;
       this.heart = 3;
+      control = false;
     }
   }
   }
