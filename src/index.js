@@ -3,6 +3,8 @@
 import Phaser from "phaser";
 import LevelOne from "./levelOne";
 import LevelTwo from "./levelTwo";
+import StartScene from "./start";
+import EndScene from "./end";
 
 
 //how to use multiple scenes
@@ -28,7 +30,7 @@ window.onload = function() {
         }
       }
     },
-    scene: [LevelOne, LevelTwo]
+    scene: [StartScene, LevelOne, LevelTwo, EndScene]
   }
 
   var game = new Phaser.Game(gameConfig);

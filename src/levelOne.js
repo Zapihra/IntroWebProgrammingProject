@@ -26,11 +26,16 @@ const gameOptions = {
 export default class LevelOne extends Phaser.Scene {
     
     //game = new Phaser.Game(gameConfig);
+    init (data) {
+      console.log(data);
+      this.score = data.score;
+      this.heart = data.heart;
+    }
 
     constructor() {
       super({ key: "LevelOne"});
-      this.score = 0;
-      this.heart = 3;
+      this.score;
+      this.heart;
       this.level = 1;
     }
   
@@ -189,7 +194,7 @@ export default class LevelOne extends Phaser.Scene {
         coins.setScale(0.08);
       }
   
-      if(Phaser.Math.Between(0,0.2)) {
+      if(Phaser.Math.Between(0,0.3)) {
         this.spikes.create(Phaser.Math.Between(0, 
           this.game.config.width), Phaser.Math.Between(100, 
             300), "spike");
@@ -289,22 +294,21 @@ export default class LevelOne extends Phaser.Scene {
         this.shootSound.play()
         
         control = true;
-        this.time.addEvent({delay: 900, callback: () => {control = false}, loop: false})
+        this.time.addEvent({delay: 500, callback: () => {control = false}, loop: false})
 
       }
   
       if(this.player.y > this.game.config.height || this.player.y < 0 || this.heart == 0) {
-        this.scene.start("LevelOne");
-        this.score = 0;
-        this.heart = 3;
-        control = false;
+        this.scene.start("EndScene", {score: this.score});
       }
-  
-      if(this.score >= 7 ) {
-        this.scene.start("LevelTwo");
-        this.score = 0;
-        this.heart = 3;
+      
+      //getting scores to next level
+      //https://labs.phaser.io/edit.html?src=src%5Cscenes%5Cpassing%20data%20to%20a%20scene.js
+      if(this.score >= 8 ) {
+        this.scene.start("LevelTwo", {score: this.score, heart: this.heart});
         control = false;
       }
     }
-  }
+
+
+}

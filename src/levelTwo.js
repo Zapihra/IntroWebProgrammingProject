@@ -15,6 +15,8 @@ import coinS from "./audio/coin.mp3"
 //https://stackoverflow.com/questions/66878947/image-is-not-getting-added-to-the-scene-phaser-3-5
 // having the pictures show in the web browser
 
+//taking score with you to next scene
+//https://stackoverflow.com/questions/53356039/how-do-i-pass-data-from-scene-to-scene-in-phaser-3
 
 var input;
 var control = false;
@@ -26,10 +28,18 @@ const gameOptions = {
 
 export default class LevelTwo extends Phaser.Scene {
 
+  init (data) {
+    console.log(data);
+    this.score = data.score;
+    this.heart = data.heart;
+
+    console.log(this.score, this.heart);
+  }
+
   constructor() {
     super({key: "LevelTwo"});
-    this.score = 0;
-    this.heart = 3;
+    this.score;
+    this.heart;
     this.level = 2;
   }
   
@@ -119,8 +129,8 @@ export default class LevelTwo extends Phaser.Scene {
       this.rockSpike, null, this);
 
   
-    this.scoreText = this.add.text(32, 2, "0", {fontSize: "30px", fill: "#ffffff"})
-    this.heartText = this.add.text(32, 35, "3", {fontSize: "30px", fill: "#ffffff"})
+    this.scoreText = this.add.text(32, 2, this.score, {fontSize: "30px", fill: "#ffffff"})
+    this.heartText = this.add.text(32, 35, this.heart, {fontSize: "30px", fill: "#ffffff"})
     this.level = this.add.text(32, 70, "lvl: 2", {fontSize: "25px", fill: "#ffffff"});
   
   
@@ -231,7 +241,7 @@ export default class LevelTwo extends Phaser.Scene {
     if(this.count == 0) {
       this.count = 1;
       this.breakSound.play();
-      this.time.addEvent({delay: 500, callback: () => {this.count = 0}, loop: false})
+      this.time.addEvent({delay: 200, callback: () => {this.count = 0}, loop: false})
     }
   }
   
@@ -287,10 +297,7 @@ export default class LevelTwo extends Phaser.Scene {
     }
   
     if(this.player.y > this.game.config.height || this.player.y < 0 || this.heart == 0) {
-      this.scene.start("LevelOne");
-      this.score = 0;
-      this.heart = 3;
-      control = false;
+      this.scene.start("EndScene", {score: this.score});
     }
   }
   }
