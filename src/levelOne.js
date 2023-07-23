@@ -241,7 +241,7 @@ export default class LevelOne extends Phaser.Scene {
       if(this.count == 0) {
         this.count = 1;
         this.breakSound.play();
-        this.time.addEvent({delay: 500, callback: () => {this.count = 0}, loop: false})
+        this.time.addEvent({delay: 5000, callback: () => {this.count = 0}, loop: false})
       }
     }
   
@@ -294,7 +294,7 @@ export default class LevelOne extends Phaser.Scene {
         this.shootSound.play()
         
         control = true;
-        this.time.addEvent({delay: 500, callback: () => {control = false}, loop: false})
+        this.time.addEvent({delay: 450, callback: () => {control = false}, loop: false})
 
       }
   
